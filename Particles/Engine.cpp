@@ -140,6 +140,7 @@ int Engine::renderFrame() {
         if (ImGui::Button("Damp")) system->damp();
         if (ImGui::Button("Add Particle")) system->addRandomParticle();
         if (ImGui::Button("Remove Particle")) system->removeRandomParticle();
+        if (ImGui::Button("Clear Trails")) system->clearTrails();
         float G = system->getG();
         ImGui::SliderFloat("G", &G, 0.001f, 10.0f);
         system->setG(G);

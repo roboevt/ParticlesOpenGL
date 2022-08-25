@@ -33,12 +33,12 @@ void ParticleSystem::update() {
 	std::chrono::duration<float> elapsedTime = now - previousFrameTime;
 	previousFrameTime = now;
 	float frameTime = elapsedTime.count();
-	for (int i = 0; i < particles.size(); i++) {
+	for (int i = 0; i < 3; i++) {
 		Particle& part1 = particles[i];
 
 		//Gravitational force calculation
 		Vec2 netForce(0, 0);
-		for (int j = 0; j < particles.size(); j++) {
+		for (int j = 0; j < 3; j++) {
 			if (j == i) continue;
 			Particle part2 = particles[j];
 			const float fudge = 0.02f;
@@ -57,6 +57,8 @@ void ParticleSystem::update() {
 		if (part1.position.x() < -1.0f) part1.velocity.x(std::abs(part1.velocity.x()));
 		if (part1.position.y() < -1.0f) part1.velocity.y(std::abs(part1.velocity.y()));
 		if (part1.position.y() > 1.0f) part1.velocity.y(-std::abs(part1.velocity.y()));
+
+		particles.push_back(Particle(part1.position, Vec2(), 2.5f));
 	}
 }
 
@@ -72,4 +74,8 @@ void ParticleSystem::addRandomParticle() {
 
 void ParticleSystem::removeRandomParticle() {
 	particles.pop_back();
+}
+
+void ParticleSystem::clearTrails() {
+	particles.erase(particles.begin() + 3, particles.end());
 }
