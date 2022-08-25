@@ -12,7 +12,7 @@ static void glfw_error_callback(int error, const char* description){
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
-Engine::Engine(std::vector<Particle>& particles) : particles(&particles) {
+Engine::Engine(ParticleSystem* system) : system(system) {
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit()) std::cout << "Error with glfwInit" << std::endl;
 
@@ -20,7 +20,7 @@ Engine::Engine(std::vector<Particle>& particles) : particles(&particles) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
-    window = glfwCreateWindow(1280, 720, "Particles", NULL, NULL);
+    window = glfwCreateWindow(1920, 1080, "Particles", glfwGetPrimaryMonitor(), NULL);
     //if (window == NULL) return 1;
 
     glfwMakeContextCurrent(window);
@@ -35,30 +35,35 @@ Engine::Engine(std::vector<Particle>& particles) : particles(&particles) {
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    clearColor = Vec<4>({ 0.6f, 0.2f, 0.4f, 1.0f });
+    clearColor = Vec<4>({ 0.1f, 0.2f, 0.1f, 1.0f });
     glEnable(GL_PROGRAM_POINT_SIZE);
+    glEnable(GL_POINT_SMOOTH);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
 
     initParticleShader();
     initParticleBuffer();
 }
 
-void Engine::setParticles(std::vector<Particle>& particles) {
-    this->particles = &particles;
-}
-
 const char* vertexShaderSource = "#version 330 core\n"
 "layout (location = 0) in vec3 aPos;\n"
+"layout (location = 1) in float size;"
+"out vec2 pos;\n"
 "void main()\n"
 "{\n"
 "   gl_Position = vec4(aPos, 1.0);\n"
-"   gl_PointSize = 1.0f;\n"
+"   gl_PointSize = size;\n"
+"   pos = aPos.xy;\n"
 "}\0";
 
 const char* fragmentShaderSource = "#version 330 core\n"
 "out vec4 color;\n"
+"in vec2 pos;\n"
 "void main()\n"
 "{\n"
-"   color = vec4(0.2f, 0.6f, 1.0f, 1.0f);\n"
+"   vec2 fragPos = gl_PointCoord - vec2(0.5f, 0.5f);"
+"   float distance = sqrt(dot(fragPos, fragPos));\n"
+"   color = distance < 0.4f ? vec4(1) : vec4(0);"
 "}\n\0";
 
 int Engine::initParticleShader() {
@@ -108,10 +113,13 @@ int Engine::initParticleBuffer() {
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, particles->size() * sizeof(Particle), particles->data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, system->getParticles().size() * sizeof(Particle), system->getParticles().data(), GL_STATIC_DRAW);
 
+    glEnableVertexAttribArray(0);  // Neccesary?
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)0);
-    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)(2 * sizeof(Vec2)));
+    //glEnableVertexAttribArray(0);  // Neccesary?
 
     glBindVertexArray(VAO);
     return 0;
@@ -129,6 +137,12 @@ int Engine::renderFrame() {
     {
         ImGui::Begin("FPS");
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        if (ImGui::Button("Damp")) system->damp();
+        if (ImGui::Button("Add Particle")) system->addRandomParticle();
+        if (ImGui::Button("Remove Particle")) system->removeRandomParticle();
+        float G = system->getG();
+        ImGui::SliderFloat("G", &G, 0.001f, 10.0f);
+        system->setG(G);
         ImGui::End();
     }
 
@@ -154,10 +168,10 @@ int Engine::renderParticles() {
 
     // update shader uniform
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, particles->size() * sizeof(Particle), particles->data(), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, system->getParticles().size() * sizeof(Particle), system->getParticles().data(), GL_DYNAMIC_DRAW);
 
     // render the triangle
-    glDrawArrays(GL_POINTS, 0, particles->size());
+    glDrawArrays(GL_POINTS, 0, system->getParticles().size());
     return 0;
 }
 

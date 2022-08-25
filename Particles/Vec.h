@@ -19,7 +19,7 @@ public:
     Vec operator-(const Vec& other) const {
         float next[N];
         for (int i = 0; i < N; i++) {
-            next[i] = components[i] + other[i];
+            next[i] = components[i] - other[i];
         }
         return Vec<N>(next);
     }

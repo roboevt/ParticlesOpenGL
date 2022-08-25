@@ -1,6 +1,7 @@
 #include "Vec.h"
 #include <vector>
-#include "Particle.h"
+
+#include "ParticleSystem.h"
 
 struct GLFWwindow;
 struct ImGuiIO;
@@ -9,8 +10,7 @@ struct ImVec4;
 class Engine {
 public:
 	int renderFrame();
-	void setParticles(std::vector<Particle>& particles);
-	Engine(std::vector<Particle>& particles);
+	Engine(ParticleSystem* system);
 	~Engine();
 private:
 	int initParticleShader();
@@ -23,5 +23,5 @@ private:
 	int screenHeight;
 	unsigned int vertexShader, fragmentShader, shaderProgram;
 	unsigned int VBO, VAO;
-	std::vector<Particle>* particles;
+	ParticleSystem* system;
 };
