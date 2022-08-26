@@ -14,6 +14,8 @@ public:
 	void removeRandomParticle();
 	void setG(float Gx1000) { this->G = Gx1000 / 1000.0f; }
 	float getG() { return G * 1000.0f; }
+	void setTrail(int numTrail);
+	int getTrail() { return numTrail; }
 	void clearTrails();
 	ParticleSystem();
 	~ParticleSystem();
@@ -21,5 +23,7 @@ private:
 	std::chrono::high_resolution_clock::time_point previousFrameTime;
 	float G;
 	int numMain;
+	int numTrail;
+	int currentPart;
 	float bounceDamp;
 };

@@ -160,6 +160,9 @@ int Engine::renderFrame() {
         float G = system->getG();
         ImGui::SliderFloat("G", &G, 0.001f, 10.0f);
         system->setG(G);
+        int trail = system->getTrail();
+        ImGui::SliderInt("Trail Length", &trail, 0, 10000);
+        system->setTrail(trail);
         ImGui::End();
     }
 

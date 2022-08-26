@@ -10,12 +10,15 @@ float randf(float a, float b) {
 	return a + r;
 }
 
-ParticleSystem::ParticleSystem() : G(0.001f), numMain(3), bounceDamp(0.95f) {
+ParticleSystem::ParticleSystem() : G(0.001f), numMain(3), numTrail(5000), bounceDamp(0.95f) {
 	srand(time(0));
-	int count = numMain;
-	particles.reserve(count);
-	for (int i = 0; i < count; i++) {
-		particles.push_back(Particle({ randf(-1.0f, 1.0f), randf(-1.0f, 1.0f) }, { randf(-0.5f, 0.5f), randf(-0.5f, 0.5f) }, randf(2.0f, 100.0f)));
+	currentPart = numMain;
+	particles.reserve(numMain + numTrail);
+	for (int i = 0; i < numMain; i++) {
+		particles.push_back(Particle({ randf(-1.0f, 1.0f), randf(-1.0f, 1.0f) }, { randf(-0.5f, 0.5f), randf(-0.5f, 0.5f) }, randf(5.0f, 100.0f)));
+	}
+	for (int i = 0; i < numTrail; i++) {
+		particles.push_back(Particle(Vec2(), Vec2(), 0.0f));
 	}
 	previousFrameTime = std::chrono::high_resolution_clock::now();
 }
@@ -60,7 +63,12 @@ void ParticleSystem::update() {
 		if (part1.position.y() < -1.0f) part1.velocity.y(std::abs(part1.velocity.y()) * bounceDamp);
 		if (part1.position.y() > 1.0f) part1.velocity.y(-std::abs(part1.velocity.y()) * bounceDamp);
 
-		particles.push_back(Particle(part1.position, Vec2(), 2.5f));
+		//particles[currentPart++] = Particle(part1.position, Vec2(), 2.5f);
+		particles.at(currentPart++) = Particle(part1.position, Vec2(), 2.5f);
+		//particles.insert(particles.begin() + currentPart++, Particle(part1.position, Vec2(), 2.5f));
+		if (currentPart >= numTrail) currentPart = numMain;
+		std::cout << currentPart << "\t" << particles.size() << std::endl;
+		//particles.push_back(Particle(part1.position, Vec2(), 2.5f));
 	}
 }
 
@@ -73,15 +81,33 @@ void ParticleSystem::damp() {
 void ParticleSystem::addRandomParticle() {
 	clearTrails();
 	numMain++;
-	particles.push_back(Particle({ randf(-1.0f, 1.0f), randf(-1.0f, 1.0f) }, { randf(-0.5f, 0.5f), randf(-0.5f, 0.5f) }, randf(2.0f, 100.0f)));	
+	numTrail++;
+	particles.at(numMain - 1) = (Particle({ randf(-1.0f, 1.0f), randf(-1.0f, 1.0f) }, { randf(-0.5f, 0.5f), randf(-0.5f, 0.5f) }, randf(2.0f, 100.0f)));	
 }
 
 void ParticleSystem::removeRandomParticle() {
 	clearTrails();
-	particles.pop_back();
+	//particles.pop_back();
 	numMain--;
 }
 
 void ParticleSystem::clearTrails() {
-	particles.erase(particles.begin() + numMain, particles.end());
+	//particles.erase(particles.begin() + numMain, particles.end());
+}
+
+void ParticleSystem::setTrail(int newTrail) {
+	if (newTrail < numMain) {
+		numTrail = numMain * 2;
+		return;
+	}
+	if (newTrail > numTrail) {
+		particles.reserve(newTrail);
+		for (int i = this->numTrail; i < newTrail; i++) {
+			particles.push_back(Particle(Vec2(), Vec2(), 0.0f));
+		}
+	}
+	else {
+		particles.erase(particles.begin() + numTrail, particles.end());
+	}
+	numTrail = newTrail;
 }
