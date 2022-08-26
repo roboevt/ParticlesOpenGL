@@ -4,6 +4,7 @@
 #include "ParticleSystem.h"
 
 struct GLFWwindow;
+struct GLFWmonitor;
 struct ImGuiIO;
 struct ImVec4;
 
@@ -17,11 +18,12 @@ private:
 	int initParticleBuffer();
 	int renderParticles();
 	GLFWwindow* window;
+	GLFWmonitor* monitor;
 	ImGuiIO* io;
 	Vec<4> clearColor;
-	int screenWidth;
-	int screenHeight;
+	int renderWidth, renderHeight, windowWidth, windowHeight, screenWidth, screenHeight;
 	unsigned int vertexShader, fragmentShader, shaderProgram;
 	unsigned int VBO, VAO;
 	ParticleSystem* system;
+	bool fullscreen;
 };

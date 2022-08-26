@@ -12,21 +12,24 @@ static void glfw_error_callback(int error, const char* description){
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
-Engine::Engine(ParticleSystem* system) : system(system) {
+Engine::Engine(ParticleSystem* system) : system(system), windowWidth(1280), windowHeight(720), fullscreen(false) {
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit()) std::cout << "Error with glfwInit" << std::endl;
+    
 
     const char* glsl_version = "#version 430";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
-    window = glfwCreateWindow(1920, 1080, "Particles", glfwGetPrimaryMonitor(), NULL);
-    //if (window == NULL) return 1;
+    window = glfwCreateWindow(windowWidth, windowHeight, "Particles", NULL, NULL);
+    if (window == NULL) std::cout << "Error creating window" << std::endl;
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(0); // No Vsync
 
     if (!glewInit())  std::cout << "Error with glewInit" << std::endl;
+
+    
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -137,10 +140,23 @@ int Engine::renderFrame() {
     {
         ImGui::Begin("FPS");
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        if (ImGui::Button("Damp")) system->damp();
-        if (ImGui::Button("Add Particle")) system->addRandomParticle();
-        if (ImGui::Button("Remove Particle")) system->removeRandomParticle();
-        if (ImGui::Button("Clear Trails")) system->clearTrails();
+        if(ImGui::Button("Damp")) system->damp();
+        if(ImGui::Button("Add Particle")) system->addRandomParticle();
+        if(ImGui::Button("Remove Particle")) system->removeRandomParticle();
+        if(ImGui::Button("Clear Trails")) system->clearTrails();
+        if (ImGui::Button("Toggle Fullscreen")) {
+            fullscreen = !fullscreen;
+            const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+            if (fullscreen) {
+                const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+                screenWidth = mode->width;
+                screenHeight = mode->height;
+            }
+
+            glfwSetWindowMonitor(window, fullscreen ? glfwGetPrimaryMonitor() : NULL, 0, 30, 
+                fullscreen ? screenWidth : windowWidth, 
+                fullscreen ? screenHeight : windowHeight, GLFW_DONT_CARE);
+        }
         float G = system->getG();
         ImGui::SliderFloat("G", &G, 0.001f, 10.0f);
         system->setG(G);
@@ -149,8 +165,8 @@ int Engine::renderFrame() {
 
     //Render
     ImGui::Render();
-    glfwGetFramebufferSize(window, &screenWidth, &screenHeight);
-    glViewport(0, 0, screenWidth, screenHeight);
+    glfwGetFramebufferSize(window, &renderWidth, &renderHeight);
+    glViewport(0, 0, renderWidth, renderHeight);
     glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
     glClear(GL_COLOR_BUFFER_BIT);
     
