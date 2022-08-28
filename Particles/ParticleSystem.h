@@ -7,15 +7,17 @@
 class ParticleSystem {
 public:
 	std::vector<Particle> particles;
+	std::vector<Particle> trail;
 	void update();
 	std::vector<Particle>& getParticles();
+	std::vector<Particle>& getTrail();
 	void damp();
 	void addRandomParticle();
 	void removeRandomParticle();
 	void setG(float Gx1000) { this->G = Gx1000 / 1000.0f; }
 	float getG() { return G * 1000.0f; }
-	void setTrail(int numTrail);
-	int getTrail() { return numTrail; }
+	void setTrailLength(int numTrail);
+	int getTrailLength() { return numTrail; }
 	void clearTrails();
 	ParticleSystem();
 	~ParticleSystem();
@@ -24,6 +26,6 @@ private:
 	float G;
 	int numMain;
 	int numTrail;
-	int currentPart;
+	int currentTrailEnd;
 	float bounceDamp;
 };

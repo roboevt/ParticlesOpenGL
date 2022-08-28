@@ -106,25 +106,46 @@ int Engine::initParticleShader() {
     }
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
+
+    glUseProgram(shaderProgram);
     return 0;
 }
 
 int Engine::initParticleBuffer() {
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
+    glGenVertexArrays(1, &VAO_P);
+    glGenBuffers(1, &VBO_P);
     // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-    glBindVertexArray(VAO);
+    glBindVertexArray(VAO_P);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, system->getParticles().size() * sizeof(Particle), system->getParticles().data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO_P);
+    glBufferData(GL_ARRAY_BUFFER, system->getParticles().size() * sizeof(Particle), 
+        system->getParticles().data(), GL_DYNAMIC_DRAW);
 
     glEnableVertexAttribArray(0);  // Neccesary?
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)0);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)(2 * sizeof(Vec2)));
-    //glEnableVertexAttribArray(0);  // Neccesary?
 
-    glBindVertexArray(VAO);
+    //glBindVertexArray(VAO_P);
+    //glUseProgram(shaderProgram);
+    return 0;
+}
+
+int Engine::initTrailBuffer() {
+    glGenVertexArrays(1, &VAO_T);
+    glGenBuffers(1, &VBO_T);
+
+    glBindVertexArray(VAO_T);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO_T);
+    
+    glBufferData(GL_ARRAY_BUFFER, system->getTrail().size() * sizeof(Particle),
+        system->getTrail().data(), GL_DYNAMIC_DRAW);
+    
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)(2 * sizeof(Vec2)));
+
     return 0;
 }
 
@@ -160,21 +181,22 @@ int Engine::renderFrame() {
         float G = system->getG();
         ImGui::SliderFloat("G", &G, 0.001f, 10.0f);
         system->setG(G);
-        int trail = system->getTrail();
+        int trail = system->getTrailLength();
         ImGui::SliderInt("Trail Length", &trail, 0, 10000);
-        system->setTrail(trail);
+        system->setTrailLength(trail);
         ImGui::End();
     }
 
-    //Render
+    //Render setup
     ImGui::Render();
     glfwGetFramebufferSize(window, &renderWidth, &renderHeight);
     glViewport(0, 0, renderWidth, renderHeight);
     glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
     glClear(GL_COLOR_BUFFER_BIT);
     
-
+    //Render dynamic objects here:
     renderParticles();
+    renderTrail();
 
 
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -184,14 +206,26 @@ int Engine::renderFrame() {
 }
 
 int Engine::renderParticles() {
-    glUseProgram(shaderProgram);
+    
 
     // update shader uniform
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, system->getParticles().size() * sizeof(Particle), system->getParticles().data(), GL_DYNAMIC_DRAW);
+    glBindVertexArray(VAO_P);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO_P);
+    glBufferData(GL_ARRAY_BUFFER, system->getParticles().size() * sizeof(Particle), 
+        system->getParticles().data(), GL_DYNAMIC_DRAW);
 
     // render the triangle
     glDrawArrays(GL_POINTS, 0, system->getParticles().size());
+    return 0;
+}
+
+int Engine::renderTrail() {
+    glBindVertexArray(VAO_T);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO_T);
+    glBufferData(GL_ARRAY_BUFFER, system->getTrailLength() * sizeof(Particle),
+        system->getTrail().data(), GL_DYNAMIC_DRAW);
+    glDrawArrays(GL_POINTS, 0, system->getTrail().size());
+
     return 0;
 }
 
