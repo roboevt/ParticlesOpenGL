@@ -7,25 +7,23 @@
 class ParticleSystem {
 public:
 	std::vector<Particle> particles;
-	std::vector<Particle> trail;
 	void update();
 	std::vector<Particle>& getParticles();
-	std::vector<Particle>& getTrail();
 	void damp();
 	void addRandomParticle();
+	void addParticle(Particle part);
 	void removeRandomParticle();
-	void setG(float Gx1000) { this->G = Gx1000 / 1000.0f; }
-	float getG() { return G * 1000.0f; }
-	void setTrailLength(int numTrail);
-	int getTrailLength() { return numTrail; }
-	void clearTrails();
+	void setG(float G) { this->G = G; }
+	float getG() { return G; }
 	ParticleSystem();
 	~ParticleSystem();
 private:
+	void applyGravity(Particle& part);
+	void applyCollision(Particle& part1, Particle& part2);
+
 	std::chrono::high_resolution_clock::time_point previousFrameTime;
 	float G;
 	int numMain;
-	int numTrail;
-	int currentTrailEnd;
 	float bounceDamp;
+	int subSteps;
 };

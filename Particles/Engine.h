@@ -13,19 +13,19 @@ public:
 	int renderFrame();
 	Engine(ParticleSystem* system);
 	~Engine();
+	Vec2 mousePos;
 private:
 	int initParticleShader();
 	int initParticleBuffer();
-	int initTrailBuffer();
 	int renderParticles();
-	int renderTrail();
 	GLFWwindow* window;
 	GLFWmonitor* monitor;
 	ImGuiIO* io;
 	Vec<4> clearColor;
+	int frames;
 	int renderWidth, renderHeight, windowWidth, windowHeight, screenWidth, screenHeight;
 	unsigned int vertexShader, fragmentShader, shaderProgram;
-	unsigned int VBO_P, VAO_P, VBO_T, VAO_T;
+	unsigned int VBO_P, VAO_P;
 	ParticleSystem* system;
 	bool fullscreen;
 };

@@ -2,7 +2,7 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
-#include <gl/glew.h>
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 #include <stdio.h>
@@ -12,10 +12,9 @@ static void glfw_error_callback(int error, const char* description){
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
-Engine::Engine(ParticleSystem* system) : system(system), windowWidth(1280), windowHeight(720), fullscreen(false) {
+Engine::Engine(ParticleSystem* system) : system(system), windowWidth(1280), windowHeight(720), fullscreen(false), frames(0) {
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit()) std::cout << "Error with glfwInit" << std::endl;
-    
 
     const char* glsl_version = "#version 430";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -26,10 +25,9 @@ Engine::Engine(ParticleSystem* system) : system(system), windowWidth(1280), wind
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(0); // No Vsync
+    // glfwSetWindowUserPointer(window, reinterpret_cast<void *>(this)); // Not currently used but helpful for callbacks
 
     if (!glewInit())  std::cout << "Error with glewInit" << std::endl;
-
-    
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -50,12 +48,12 @@ Engine::Engine(ParticleSystem* system) : system(system), windowWidth(1280), wind
 
 const char* vertexShaderSource = "#version 330 core\n"
 "layout (location = 0) in vec3 aPos;\n"
-"layout (location = 1) in float size;"
+// "layout (location = 1) in float size;"
 "out vec2 pos;\n"
 "void main()\n"
 "{\n"
 "   gl_Position = vec4(aPos, 1.0);\n"
-"   gl_PointSize = size;\n"
+"   gl_PointSize = 10;\n"
 "   pos = aPos.xy;\n"
 "}\0";
 
@@ -121,38 +119,31 @@ int Engine::initParticleBuffer() {
     glBufferData(GL_ARRAY_BUFFER, system->getParticles().size() * sizeof(Particle), 
         system->getParticles().data(), GL_DYNAMIC_DRAW);
 
+    // Position attribute
     glEnableVertexAttribArray(0);  // Neccesary?
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)(2 * sizeof(Vec2)));
 
-    //glBindVertexArray(VAO_P);
-    //glUseProgram(shaderProgram);
-    return 0;
-}
-
-int Engine::initTrailBuffer() {
-    glGenVertexArrays(1, &VAO_T);
-    glGenBuffers(1, &VBO_T);
-
-    glBindVertexArray(VAO_T);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO_T);
-    
-    glBufferData(GL_ARRAY_BUFFER, system->getTrail().size() * sizeof(Particle),
-        system->getTrail().data(), GL_DYNAMIC_DRAW);
-    
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)(2 * sizeof(Vec2)));
+    // Set size (now hardcoded to 10)
+    // glEnableVertexAttribArray(1);
+    // glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)(2 * sizeof(Vec2)));
 
     return 0;
 }
 
 int Engine::renderFrame() {
+    const auto start = std::chrono::high_resolution_clock::now();
     if (glfwWindowShouldClose(window)) return 1;
 
     glfwPollEvents();
+
+    int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+    if (state == GLFW_PRESS) {
+        if (!(frames % 8)) {
+            double xpos, ypos;
+            glfwGetCursorPos(window, &xpos, &ypos);
+            system->addParticle(Particle(Vec2(xpos / windowWidth * 2 - 1, 1 - ypos / windowHeight * 2), Vec2(0, 0)));
+        }
+    }
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -161,10 +152,6 @@ int Engine::renderFrame() {
     {
         ImGui::Begin("FPS");
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        if(ImGui::Button("Damp")) system->damp();
-        if(ImGui::Button("Add Particle")) system->addRandomParticle();
-        if(ImGui::Button("Remove Particle")) system->removeRandomParticle();
-        if(ImGui::Button("Clear Trails")) system->clearTrails();
         if (ImGui::Button("Toggle Fullscreen")) {
             fullscreen = !fullscreen;
             const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
@@ -181,9 +168,6 @@ int Engine::renderFrame() {
         float G = system->getG();
         ImGui::SliderFloat("G", &G, 0.001f, 10.0f);
         system->setG(G);
-        int trail = system->getTrailLength();
-        ImGui::SliderInt("Trail Length", &trail, 0, 10000);
-        system->setTrailLength(trail);
         ImGui::End();
     }
 
@@ -196,18 +180,23 @@ int Engine::renderFrame() {
     
     //Render dynamic objects here:
     renderParticles();
-    renderTrail();
+    // renderTrail();
 
 
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
     glfwSwapBuffers(window);
+
+    frames++;
+
+    const auto end = std::chrono::high_resolution_clock::now();
+	const std::chrono::duration<float> elapsed = end - start;
+	// std::cout << "Render Elapsed time: " << elapsed.count() * 1000 << "ms" << std::endl;
+
     return 0;
 }
 
 int Engine::renderParticles() {
-    
-
     // update shader uniform
     glBindVertexArray(VAO_P);
     glBindBuffer(GL_ARRAY_BUFFER, VBO_P);
@@ -216,16 +205,6 @@ int Engine::renderParticles() {
 
     // render the triangle
     glDrawArrays(GL_POINTS, 0, system->getParticles().size());
-    return 0;
-}
-
-int Engine::renderTrail() {
-    glBindVertexArray(VAO_T);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO_T);
-    glBufferData(GL_ARRAY_BUFFER, system->getTrailLength() * sizeof(Particle),
-        system->getTrail().data(), GL_DYNAMIC_DRAW);
-    glDrawArrays(GL_POINTS, 0, system->getTrail().size());
-
     return 0;
 }
 

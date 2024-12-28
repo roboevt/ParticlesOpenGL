@@ -7,12 +7,12 @@
 #include <immintrin.h>
 #include <stdio.h>
 
-#define USE_SIMD
+// #define USE_SIMD
 
-class Vec3
+class alignas(16) Vec3
 {
 public:
-#ifdef USE_SIMD:
+#ifdef USE_SIMD
 	__m128 sseVector;
 #else
 	float x, y, z;

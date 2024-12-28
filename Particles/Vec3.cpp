@@ -51,7 +51,7 @@ Vec3 Vec3::normalized() const {
 	return Vec3(_mm_mul_ps(this->sseVector, inverseSqrt));
 #else
 	float magnitude = this->magnitude();
-	return Vector(this->x / magnitude, this->y / magnitude, this->z / magnitude);
+	return Vec3(this->x / magnitude, this->y / magnitude, this->z / magnitude);
 #endif
 }
 
@@ -59,7 +59,7 @@ Vec3 Vec3::operator+(const Vec3& other) const {
 #ifdef USE_SIMD
 	return Vec3(_mm_add_ps(this->sseVector, other.sseVector));
 #else
-	return Vector(this->x + other.x, this->y + other.y, this->z + other.z);
+	return Vec3(this->x + other.x, this->y + other.y, this->z + other.z);
 #endif
 }
 
@@ -67,9 +67,9 @@ void Vec3::operator+=(const Vec3& other) {
 #ifdef USE_SIMD
 	this->sseVector = _mm_add_ps(this->sseVector, other.sseVector);
 #else
-	this.x += other.x;
-	this.y += other.y;
-	this.z += other.z;
+	this->x += other.x;
+	this->y += other.y;
+	this->z += other.z;
 #endif
 }
 
@@ -77,7 +77,7 @@ Vec3 Vec3::operator-(const Vec3& other) const {
 #ifdef USE_SIMD
 	return Vec3(_mm_sub_ps(this->sseVector, other.sseVector));
 #else
-	return Vector(this->x - other.x, this->y - other.y, this->z - other.z);
+	return Vec3(this->x - other.x, this->y - other.y, this->z - other.z);
 #endif
 }
 
@@ -85,9 +85,9 @@ void Vec3::operator-=(const Vec3& other) {
 #ifdef USE_SIMD
 	this->sseVector = _mm_sub_ps(this->sseVector, other.sseVector);
 #else
-	this.x -= other.x;
-	this.y -= other.y;
-	this.z -= other.z;
+	this->x -= other.x;
+	this->y -= other.y;
+	this->z -= other.z;
 #endif
 }
 
@@ -95,7 +95,7 @@ Vec3 Vec3::operator*(const float scale) const {
 #ifdef USE_SIMD
 	return Vec3(_mm_mul_ps(this->sseVector, _mm_set1_ps(scale)));
 #else
-	return Vector(this->x * scale, this->y * scale, this->z * scale);
+	return Vec3(this->x * scale, this->y * scale, this->z * scale);
 #endif
 }
 
