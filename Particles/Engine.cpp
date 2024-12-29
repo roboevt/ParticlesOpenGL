@@ -141,8 +141,11 @@ int Engine::renderFrame() {
         if (!(frames % 8)) {
             double xpos, ypos;
             glfwGetCursorPos(window, &xpos, &ypos);
-            system->addParticle(Particle(Vec2(xpos / windowWidth * 2 - 1, 1 - ypos / windowHeight * 2), Vec2(0, 0)));
+            // system->addParticle(Particle(Vec2(xpos / windowWidth * 2 - 1, 1 - ypos / windowHeight * 2), Vec2(0, 0)));
+            system->setAttractor(xpos / windowWidth * 2 - 1, 1 - ypos / windowHeight * 2);
         }
+    } else {
+        system->removeAttractor();
     }
 
     ImGui_ImplOpenGL3_NewFrame();

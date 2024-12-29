@@ -6,6 +6,7 @@
 
 struct Particle {
 	static constexpr float mass = 1.0f;
+	static constexpr float RADIUS = 0.012f;
 	Vec2 position;
 	Vec2 last_position;
 	Vec2 acceleration;
@@ -21,5 +22,9 @@ struct Particle {
 		last_position = position;
 		position += velocity + acceleration * timestep * timestep;
 		acceleration = Vec2(0, 0);
+	}
+
+	bool operator==(const Particle& other) const {
+		return position == other.position;
 	}
 };

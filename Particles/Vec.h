@@ -77,6 +77,13 @@ public:
         os << ")";
         return os;
     }
+
+    bool operator==(const Vec& other) const {
+        for (int i = 0; i < N; i++) {
+            if (components[i] != other.components[i]) return false;
+        }
+        return true;
+    }
 };
 
 class Vec3 : public Vec<3> {
