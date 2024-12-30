@@ -24,9 +24,13 @@ public:
 	void addParticle(Particle part);
 	void removeRandomParticle();
 	void setG(float G) { this->G = G; }
-	float getG() { return G; }
+	float getG() const { return G; }
+	void setSubSteps(int subSteps) { this->subSteps = subSteps; }
+	int getSubSteps() const { return subSteps; }
 	void setAttractor(float x, float y);
 	void removeAttractor();
+	void setRepulsor(float x, float y);
+	void removeRepulsor();
 
 	ParticleSystem();
 	~ParticleSystem();
@@ -35,6 +39,7 @@ private:
 	void applyCollision(Particle& part1, Particle& part2);
 	void applyNBodyGravity(Particle& part1, Particle& part2);
 	void applyAttractor(Particle& part);
+	void applyRepulsor(Particle& part);
 
 	void assignParticlesToGrid();
 	void applyCollisionsGrid();
@@ -42,7 +47,9 @@ private:
 
 	Grid grid;
 	Vec2 attractor;
+	Vec2 repulsor;
 	bool attractorActive;
+	bool repulsorActive;
 
 	std::chrono::high_resolution_clock::time_point previousFrameTime;
 	float G;

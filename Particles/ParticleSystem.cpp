@@ -12,7 +12,7 @@ float randf(float a, float b) {
 
 ParticleSystem::ParticleSystem() : G(1.f), bounceDamp(0.95f), subSteps(8) {
 	srand(time(0));
-	for (int i = 0; i < 0; i++) {
+	for (int i = 0; i < 4096; i++) {
 		particles.push_back(Particle({ randf(-1.0f, 1.0f), randf(-1.0f, 1.0f) }, { randf(-.001f, .001f), randf(-.001f, .001f) }));
 	}
 	previousFrameTime = std::chrono::high_resolution_clock::now();
@@ -48,19 +48,13 @@ static void applyBorderConstraint(Particle& part) {
 
 void ParticleSystem::applyCollision(Particle& part1, Particle& part2) {
 	const Vec2 direction = part1.position - part2.position;
-	const float distance = direction.magnitude();
-	if (distance < Particle::RADIUS) {
+	float distance = direction.magnitudeSquared();
+	if (distance < Particle::RADIUS * Particle::RADIUS) {
+		distance = sqrtf(distance);
 		const Vec2 n = direction / distance;
 		const float delta = Particle::RADIUS - distance;
 		part1.position += n * delta / 2;
 		part2.position -= n * delta / 2;
-		// 		std::cout << "Collision between " << part1.position << " and " << part2.position << std::endl;
-		// std::cout << "Distance: " << distance << std::endl;
-		// std::cout << "Delta: " << delta << std::endl;
-		// std::cout << "Direction: " << direction << std::endl;
-		// std::cout << "n: " << n << std::endl;
-		// endl(std::cout);
-		// Approximate velocities using position change
 	}
 }
 
@@ -70,6 +64,15 @@ void ParticleSystem::applyAttractor(Particle& part) {
 		float force = ((G + .5f) * part.mass * 0.1f / (direction.magnitudeSquared() + 0.01f));
 		if(force > 1e3) force = 1e3;  // Clip force to limit explosions
 		part.accelerate(direction.normalized() * force);
+	}
+}
+
+void ParticleSystem::applyRepulsor(Particle& part) {
+	if (repulsorActive) {
+		const Vec2 direction = repulsor - part.position;
+		float force = ((G + .5f) * part.mass * 0.1f / (direction.magnitudeSquared() + 0.01f));
+		if(force > 1e3) force = 1e3;  // Clip force to limit explosions
+		part.accelerate(direction.normalized() * -force);
 	}
 }
 
@@ -174,6 +177,7 @@ void ParticleSystem::update() {
 			applyGravity(part1);
 			applyBorderConstraint(part1);
 			applyAttractor(part1);
+			applyRepulsor(part1);
 			part1.updatePosition(frameTime);
 		}
 	}
@@ -190,6 +194,15 @@ void ParticleSystem::setAttractor(float x, float y) {
 
 void ParticleSystem::removeAttractor() {
 	attractorActive = false;
+}
+
+void ParticleSystem::setRepulsor(float x, float y) {
+	repulsor = Vec2(x, y);
+	repulsorActive = true;
+}
+
+void ParticleSystem::removeRepulsor() {
+	repulsorActive = false;
 }
 
 void ParticleSystem::addParticle(Particle part) {

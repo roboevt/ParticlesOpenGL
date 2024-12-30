@@ -138,14 +138,21 @@ int Engine::renderFrame() {
 
     int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
     if (state == GLFW_PRESS) {
-        if (!(frames % 8)) {
-            double xpos, ypos;
-            glfwGetCursorPos(window, &xpos, &ypos);
-            // system->addParticle(Particle(Vec2(xpos / windowWidth * 2 - 1, 1 - ypos / windowHeight * 2), Vec2(0, 0)));
-            system->setAttractor(xpos / windowWidth * 2 - 1, 1 - ypos / windowHeight * 2);
-        }
+        double xpos, ypos;
+        glfwGetCursorPos(window, &xpos, &ypos);
+        // system->addParticle(Particle(Vec2(xpos / windowWidth * 2 - 1, 1 - ypos / windowHeight * 2), Vec2(0, 0)));
+        system->setAttractor(xpos / windowWidth * 2 - 1, 1 - ypos / windowHeight * 2);
     } else {
         system->removeAttractor();
+    }
+
+    state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
+    if (state == GLFW_PRESS) {
+        double xpos, ypos;
+        glfwGetCursorPos(window, &xpos, &ypos);
+        system->setRepulsor(xpos / windowWidth * 2 - 1, 1 - ypos / windowHeight * 2);
+    } else {
+        system->removeRepulsor();
     }
 
     ImGui_ImplOpenGL3_NewFrame();
@@ -169,8 +176,11 @@ int Engine::renderFrame() {
                 fullscreen ? screenHeight : windowHeight, GLFW_DONT_CARE);
         }
         float G = system->getG();
-        ImGui::SliderFloat("G", &G, 0.001f, 10.0f);
+        ImGui::SliderFloat("G", &G, 0.0f, 10.0f);
         system->setG(G);
+        int subSteps = system->getSubSteps();
+        ImGui::SliderInt("Substeps", &subSteps, 1, 64);
+        system->setSubSteps(subSteps);
         ImGui::End();
     }
 
